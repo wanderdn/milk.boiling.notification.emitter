@@ -1,17 +1,21 @@
 package org.milk.boiling.notification.emitter.dto;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import org.milk.boiling.notification.emitter.entity.UserSubscriptions;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+public record MilkSubDTO(@JsonUnwrapped UserSubscriptions subscriber,
+                         SubOperationType SubOperationType
+) {
+    public static MilkSubDTO unnsubMilkSubDTO(UserSubscriptions subscriber) {
+        return new MilkSubDTO(subscriber, org.milk.boiling.notification.emitter.dto.SubOperationType.UNSUBSCRIBE);
+    }
 
-@Builder
-public record MilkSubDTO(UUID sessionId, UUID userId,
-                         OPERATION_TYPE operationType,
-                         LocalDateTime lastSeenTime, int shardId) {
+    public static MilkSubDTO subMilkSubDTO(UserSubscriptions subscriber) {
+        return new MilkSubDTO(subscriber, org.milk.boiling.notification.emitter.dto.SubOperationType.SUBSCRIBE);
+    }
 
-    public MilkSubDTO(UUID sessionId, UUID userId, OPERATION_TYPE operationType, int shardId) {
-        this(sessionId, userId, operationType, LocalDateTime.now(), shardId);
+    public static MilkSubDTO heartBeatbMilkSubDTO(UserSubscriptions subscriber) {
+        return new MilkSubDTO(subscriber, org.milk.boiling.notification.emitter.dto.SubOperationType.HEARTBEAT);
     }
 
 

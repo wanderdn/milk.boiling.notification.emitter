@@ -1,0 +1,55 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'org.milk'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(24)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.kafka:spring-kafka'
+	implementation("io.projectreactor.kafka:reactor-kafka")
+
+	implementation("com.github.ben-manes.caffeine:jcache:3.2.1")
+
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation "io.projectreactor:reactor-core-micrometer"
+//	implementation group: 'io.micrometer', name: 'context-propagation'
+//	implementation group: 'io.micrometer', name: 'micrometer-observation'
+	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+
+	compileOnly 'org.projectlombok:lombok'
+
+	annotationProcessor 'org.projectlombok:lombok'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	testImplementation("com.tngtech.archunit:archunit:1.4.1")
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

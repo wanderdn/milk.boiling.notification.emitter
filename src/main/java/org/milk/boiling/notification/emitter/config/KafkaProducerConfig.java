@@ -1,6 +1,7 @@
 package org.milk.boiling.notification.emitter.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,7 @@ import reactor.kafka.sender.MicrometerProducerListener;
 import reactor.kafka.sender.SenderOptions;
 
 @Configuration
+@Slf4j
 public class KafkaProducerConfig {
 
     @Bean
