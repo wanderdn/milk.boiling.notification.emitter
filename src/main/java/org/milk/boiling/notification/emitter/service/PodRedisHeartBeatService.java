@@ -22,7 +22,7 @@ public class PodRedisHeartBeatService implements SmartLifecycle {
 
     @Override
     public void start() {
-        disposable = milkBoilingEventRedisTemplate.opsForValue().set("pods", redisMessagingConfig.getPodId().toString(), Duration.ofSeconds(60))
+        disposable = milkBoilingEventRedisTemplate.opsForValue().set("pods:"+ redisMessagingConfig.podId().toString(),"", Duration.ofSeconds(60)) // this one need to be refactored
                 .repeat().delayElements(Duration.ofSeconds(10)).retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1))).subscribe();
         running = true;
     }

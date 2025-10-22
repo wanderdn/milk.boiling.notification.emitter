@@ -23,10 +23,10 @@ public class UserRedisSubscriptionService implements RemoteUserSubscriptionServi
 
 
     public void removeSubscription(UUID userId) {
-        reactiveSetOps.remove(userId.toString(), messagingConfig.getPodId().toString()).subscribe();
+        reactiveSetOps.remove(userId.toString(), messagingConfig.podId().toString()).subscribe();
     }
 
     public void createSubscription(UUID userId) {
-        reactiveSetOps.add(userId.toString(), messagingConfig.getPodId().toString()).subscribe();
+        reactiveSetOps.add(userId.toString(), messagingConfig.podId().toString()).subscribe();
     }
 }

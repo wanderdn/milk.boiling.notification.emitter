@@ -18,7 +18,6 @@ spring:
       group-id: ${spring.application.name}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-
       properties:
         reactiveAutoCommit: true
         spring:
@@ -54,6 +53,9 @@ milk:
     redis:
       messaging:
         stream-name: milk
+        message-count: 10_000
+        pod-id:  e378633a-ebc8-41de-8e55-a7d86cc83ff2
+        ##${random.uuid}
 management:
   endpoints:
     web:

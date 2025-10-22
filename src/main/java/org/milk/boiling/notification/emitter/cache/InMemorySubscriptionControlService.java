@@ -9,6 +9,7 @@ import org.milk.boiling.notification.emitter.dto.MilkBoilingEvent;
 import org.milk.boiling.notification.emitter.entity.UserSubscriptions;
 import org.milk.boiling.notification.emitter.service.RemoteUserSubscriptionService;
 import org.milk.boiling.notification.emitter.service.SubscriptionsLimiterService;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -16,14 +17,17 @@ import reactor.core.publisher.Sinks;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 @Component
 @Slf4j
-public class InMemorySubscriptionControlService implements SubscriptionControlService {
+public class InMemorySubscriptionControlService implements SubscriptionControlService, SmartLifecycle {
 
     private final Cache<UUID, UserSubscriptions> currentUsers;
     private final SubscriptionsLimiterService subscriptionsLimiterService;
     private final RemoteUserSubscriptionService userSubscriptionService;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     public InMemorySubscriptionControlService(SubscriptionsLimiterService subscriptionsLimiterService,
                                               Expiry<UUID, UserSubscriptions> userSubscriptionCaffeineCacheExpirationPolicy, RemoteUserSubscriptionService userSubscriptionService) {
@@ -64,9 +68,28 @@ public class InMemorySubscriptionControlService implements SubscriptionControlSe
 
 
     public @Nullable UserSubscriptions getSinkForUserSessionSubscription(UUID userId) {
-        return Optional.ofNullable(currentUsers.getIfPresent(userId)).orElseGet(() -> {
+        Supplier<UserSubscriptions> userSubscriptionsSupplier = () -> {
             userSubscriptionService.removeSubscription(userId);
             return null;
-        });
+        };
+        return Optional.ofNullable(currentUsers.getIfPresent(userId))
+                .orElseGet(userSubscriptionsSupplier);
+    }
+
+    @Override
+    public void start() {
+        isRunning.compareAndSet(false, true);
+
+    }
+
+    @Override
+    public void stop() {
+        currentUsers.asMap().values().stream().map(UserSubscriptions::getActiveSessions).flatMap(x -> x.values().stream()).forEach(subSession -> subSession.tryEmitError(new RuntimeException()));
+        isRunning.compareAndSet(true, false);
+    }
+
+    @Override
+    public boolean isRunning() {
+        return isRunning.get();
     }
 }
