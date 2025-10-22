@@ -27,6 +27,7 @@ import reactor.util.retry.Retry;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -38,21 +39,18 @@ public class RedisStreamMessageListenerConfig implements SmartLifecycle {
     private final ReactiveStreamOperations<String, Object, byte[]> reactiveStreamOperations;
     private final ReactiveRedisTemplate<String, byte[]> milkBoilingEventRedisTemplate;
     private final AtomicLong processedMessagesCount = new AtomicLong();
-    private final AtomicLong processedMessagesCounted = new AtomicLong();
     private final Function<Map<Object, byte[]>, MilkBoilingEvent> mapMilkBoilingEventFunction;
     private final Consumer<Subscription> subscriptionConsumer;
     private final Consumer<MapRecord<String, Object, byte[]>> processedMessageCounterFunction;
-
+    private AtomicBoolean running = new AtomicBoolean(false);
 
     public RedisStreamMessageListenerConfig(RedisMessagingConfig redisMessagingConfig, ReactiveStreamOperations<String, Object, byte[]> reactiveStreamOperations, ReactiveRedisTemplate<String, byte[]> milkBoilingEventRedisTemplate, BaseFury fury) {
         this.redisMessagingConfig = redisMessagingConfig;
         this.reactiveStreamOperations = reactiveStreamOperations;
         this.milkBoilingEventRedisTemplate = milkBoilingEventRedisTemplate;
         this.mapMilkBoilingEventFunction = objectObjectMap -> (MilkBoilingEvent) fury.deserialize(objectObjectMap.get("payload"));
-
-
         this.subscriptionConsumer = _ -> log.trace("created redis stream for shard {}", redisMessagingConfig.getStreamNameForPod());
-        this.processedMessageCounterFunction = __ -> {processedMessagesCount.incrementAndGet(); processedMessagesCounted.incrementAndGet();} ;
+        this.processedMessageCounterFunction = __ -> processedMessagesCount.incrementAndGet();
         redisSystemExceptionMonoFunction = ex -> ex.getRootCause() instanceof RedisBusyException ? Mono.empty() : Mono.error(ex);
 
         unexpectedErrorDueProcessingMessage = throwable -> {
@@ -72,10 +70,8 @@ public class RedisStreamMessageListenerConfig implements SmartLifecycle {
         var consumer = org.springframework.data.redis.connection.stream.Consumer.from(redisMessagingConfig.podId().toString(), streamName);
         var streamReadOptions = StreamReadOptions.empty().block(Duration.ofSeconds(5)).count(1000);
         var stringStreamOffset = StreamOffset.create(streamName, ReadOffset.lastConsumed());
-        return reactiveStreamOperations.createGroup(streamName, redisMessagingConfig.podId().toString())
-                .onErrorResume(RedisSystemException.class, redisSystemExceptionMonoFunction)
-                .doOnError(throwable -> log.info("group already exists ", throwable))
-                .thenMany(reactiveStreamOperations.read(consumer,
+        return
+                reactiveStreamOperations.read(consumer,
                                 streamReadOptions,
                                 stringStreamOffset)
                         .doOnNext(processedMessageCounterFunction)
@@ -84,13 +80,17 @@ public class RedisStreamMessageListenerConfig implements SmartLifecycle {
                         .onErrorResume(unexpectedErrorDueProcessingMessage)
                         .repeat()
                         .doOnSubscribe(subscriptionConsumer)
-                        .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1))));
+                        .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)));
 
     }
 
 
     @Override
     public void start() {
+        reactiveStreamOperations.createGroup(redisMessagingConfig.getStreamNameForPod(), redisMessagingConfig.podId().toString())
+                .onErrorResume(RedisSystemException.class, redisSystemExceptionMonoFunction)
+                .doOnError(throwable -> log.info("group already exists ", throwable)).subscribe().dispose();
+        running.set(true);
 
     }
 
@@ -100,6 +100,8 @@ public class RedisStreamMessageListenerConfig implements SmartLifecycle {
         reactiveStreamOperations.deleteConsumer(streamName, org.springframework.data.redis.connection.stream.Consumer.from(redisMessagingConfig.podId().toString(), streamName))
                 .then(reactiveStreamOperations.destroyGroup(streamName, redisMessagingConfig.podId().toString()))
                 .subscribe().dispose();
+        running.set(false);
+
 
     }
 
@@ -120,7 +122,7 @@ public class RedisStreamMessageListenerConfig implements SmartLifecycle {
 
     @Override
     public boolean isRunning() {
-        return true;
+        return running.get();
     }
 }
 
