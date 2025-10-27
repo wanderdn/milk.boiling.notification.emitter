@@ -84,7 +84,8 @@ public class InMemorySubscriptionControlService implements SubscriptionControlSe
 
     @Override
     public void stop() {
-        currentUsers.asMap().values().stream().map(UserSubscriptions::getActiveSessions).flatMap(x -> x.values().stream()).forEach(subSession -> subSession.tryEmitError(new RuntimeException()));
+        currentUsers.asMap().values().stream().map(UserSubscriptions::getActiveSessions)
+                .flatMap(x -> x.values().stream()).forEach(Sinks.Many::tryEmitComplete);
         isRunning.compareAndSet(true, false);
     }
 

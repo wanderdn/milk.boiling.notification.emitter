@@ -1,5 +1,6 @@
 package org.milk.boiling.notification.emitter.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
@@ -10,6 +11,7 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@Slf4j
 public class RedisTemplateConfig {
     @Bean
     public ReactiveRedisTemplate<String, byte[]> milkBoilingEventRedisTemplate(
@@ -29,5 +31,4 @@ public class RedisTemplateConfig {
     public ReactiveStreamOperations<String, Object, byte[]> reactiveStreamOperations(ReactiveRedisTemplate<String, byte[]> milkBoilingEventRedisTemplate) {
         return milkBoilingEventRedisTemplate.opsForStream();
     }
-
-}
+    }

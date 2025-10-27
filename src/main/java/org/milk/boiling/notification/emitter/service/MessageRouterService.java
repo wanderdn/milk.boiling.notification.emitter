@@ -9,7 +9,9 @@ import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Service;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -20,10 +22,12 @@ public class MessageRouterService implements SmartLifecycle {
 
 
     private final SubscriptionControlService subscriptionControlService;
-    private final Flux<MilkBoilingEvent> fluxMilkBoilingEvents;
+    private final Flux<List<MilkBoilingEvent>> fluxMilkBoilingEvents;
     private final KafkaMessagingService kafkaMessagingService;
     volatile boolean running = false;
     private Disposable disposableFlux;
+    private final Sinks.Many<MilkBoilingEventStatus>  kafkaEmitter;
+
 
     private void routeMessagesToEmitters(MilkBoilingEvent milkBoilingEvent) {
         Optional.ofNullable(subscriptionControlService.getSinkForUserSessionSubscription(milkBoilingEvent.userId()))
@@ -35,7 +39,8 @@ public class MessageRouterService implements SmartLifecycle {
                                         if (sink.isFailure()) {
                                             subscriptionControlService.removeUserSessionSubscription(userSubscriptions.getUserId(), key);
                                         } else if (needSendStatus.get()) {
-                                            kafkaMessagingService.sendStatus(MilkBoilingEventStatus.buildSentStatus(milkBoilingEvent.eventId()));
+                                            kafkaEmitter.tryEmitNext(MilkBoilingEventStatus.buildSentStatus(milkBoilingEvent.eventId()));
+//                                            kafkaMessagingService.sendStatus(MilkBoilingEventStatus.buildSentStatus(milkBoilingEvent.eventId()));
                                             needSendStatus.set(false);
                                         }
                                     });
@@ -45,7 +50,7 @@ public class MessageRouterService implements SmartLifecycle {
 
     @Override
     public void start() {
-        disposableFlux = fluxMilkBoilingEvents.subscribe(this::routeMessagesToEmitters);
+        disposableFlux = fluxMilkBoilingEvents.subscribe(x-> x.forEach(this::routeMessagesToEmitters));
         running = true;
     }
 

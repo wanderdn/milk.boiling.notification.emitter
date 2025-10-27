@@ -10,10 +10,10 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
-      host: localhost
+      host: ${REDIS_SERVER}
       port: 6379
   kafka:
-    bootstrap-servers: localhost:29092,localhost:39092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP}
     consumer:
       group-id: ${spring.application.name}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -34,7 +34,7 @@ spring:
       auto-offset-reset: earliest
     producer:
       linger-ms: 10
-      bootstrap-servers: localhost:29092
+      bootstrap-servers: ${KAFKA_BOOTSTRAP}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
