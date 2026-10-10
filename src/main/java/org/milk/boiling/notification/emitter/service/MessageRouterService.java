@@ -3,8 +3,9 @@ package org.milk.boiling.notification.emitter.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.milk.boiling.notification.emitter.cache.SubscriptionControlService;
-import org.milk.boiling.notification.emitter.dto.MilkBoilingEvent;
-import org.milk.boiling.notification.emitter.dto.MilkBoilingEventStatus;
+import org.milk.boiling.notification.dto.MilkBoilingEvent;
+import org.milk.boiling.notification.dto.MilkBoilingEventStatus;
+import org.milk.boiling.notification.emitter.service.kafka.KafkaMessagingService;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Service;
 import reactor.core.Disposable;
@@ -26,7 +27,7 @@ public class MessageRouterService implements SmartLifecycle {
     private final KafkaMessagingService kafkaMessagingService;
     volatile boolean running = false;
     private Disposable disposableFlux;
-    private final Sinks.Many<MilkBoilingEventStatus>  kafkaEmitter;
+    private final Sinks.Many<MilkBoilingEventStatus> kafkaEmitter;
 
 
     private void routeMessagesToEmitters(MilkBoilingEvent milkBoilingEvent) {
@@ -50,7 +51,7 @@ public class MessageRouterService implements SmartLifecycle {
 
     @Override
     public void start() {
-        disposableFlux = fluxMilkBoilingEvents.subscribe(x-> x.forEach(this::routeMessagesToEmitters));
+        disposableFlux = fluxMilkBoilingEvents.subscribe(x -> x.forEach(this::routeMessagesToEmitters));
         running = true;
     }
 

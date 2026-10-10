@@ -1,9 +1,8 @@
-package org.milk.boiling.notification.emitter.entity;
+package org.milk.boiling.notification.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
-import org.milk.boiling.notification.emitter.dto.MilkBoilingEvent;
 import reactor.core.publisher.Sinks;
 
 import java.time.LocalDateTime;
@@ -15,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Setter
 @Getter
-public class UserSubscriptions {
+public class UserSubscriptions implements DTOInterface {
 
     @JsonIgnore
     private final Map<UUID, Sinks.Many<MilkBoilingEvent>> activeSessions = new ConcurrentHashMap<>();

@@ -1,7 +1,8 @@
+server:
+  port: 8081
 spring:
   application:
     name: boiling.notification.emitter
-
   data:
     redis:
       timeout: 2m
@@ -77,3 +78,7 @@ management:
         spring.kafka.template: true
         spring.kafka.consumer: true
         redis.commands: true
+
+
+logging.level.org.springframework.web.socket: DEBUG
+logging.level.org.springframework.web.reactive: DEBUG

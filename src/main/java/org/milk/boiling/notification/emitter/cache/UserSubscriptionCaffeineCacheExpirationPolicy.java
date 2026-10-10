@@ -1,7 +1,7 @@
 package org.milk.boiling.notification.emitter.cache;
 
 import com.github.benmanes.caffeine.cache.Expiry;
-import org.milk.boiling.notification.emitter.entity.UserSubscriptions;
+import org.milk.boiling.notification.dto.UserSubscriptions;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;

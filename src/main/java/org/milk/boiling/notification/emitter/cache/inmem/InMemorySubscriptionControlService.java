@@ -1,17 +1,18 @@
-package org.milk.boiling.notification.emitter.cache;
+package org.milk.boiling.notification.emitter.cache.inmem;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
-import org.milk.boiling.notification.emitter.dto.MilkBoilingEvent;
-import org.milk.boiling.notification.emitter.entity.UserSubscriptions;
+import org.milk.boiling.notification.emitter.cache.SubscriptionControlService;
+import org.milk.boiling.notification.dto.MilkBoilingEvent;
+import org.milk.boiling.notification.dto.UserSubscriptions;
 import org.milk.boiling.notification.emitter.service.RemoteUserSubscriptionService;
 import org.milk.boiling.notification.emitter.service.SubscriptionsLimiterService;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -20,8 +21,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-@Component
 @Slf4j
+@Service
 public class InMemorySubscriptionControlService implements SubscriptionControlService, SmartLifecycle {
 
     private final Cache<UUID, UserSubscriptions> currentUsers;
@@ -53,7 +54,6 @@ public class InMemorySubscriptionControlService implements SubscriptionControlSe
     }
 
     public void removeUserSessionSubscription(UUID userId, UUID subSession) {
-
         currentUsers.asMap().computeIfPresent(userId, (_, userSubscriptions) -> {
                     userSubscriptions.getActiveSessions().remove(subSession);
                     log.trace("User subscriptions has been removed {}  session {}", userSubscriptions, subSession);

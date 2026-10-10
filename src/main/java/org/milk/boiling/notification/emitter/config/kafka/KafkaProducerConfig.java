@@ -1,8 +1,8 @@
-package org.milk.boiling.notification.emitter.config;
+package org.milk.boiling.notification.emitter.config.kafka;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.milk.boiling.notification.emitter.dto.MilkBoilingEventStatus;
+import org.milk.boiling.notification.dto.MilkBoilingEventStatus;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +23,7 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public Sinks.Many<MilkBoilingEventStatus>  kafkaEmitter(){
+    public Sinks.Many<MilkBoilingEventStatus> kafkaEmitter() {
         return Sinks.many().multicast().onBackpressureBuffer();
     }
 }

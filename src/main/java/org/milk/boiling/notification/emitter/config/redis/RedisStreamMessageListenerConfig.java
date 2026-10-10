@@ -1,8 +1,9 @@
-package org.milk.boiling.notification.emitter.config;
+package org.milk.boiling.notification.emitter.config.redis;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.fury.BaseFury;
-import org.milk.boiling.notification.emitter.dto.MilkBoilingEvent;
+
+import org.milk.boiling.notification.dto.MilkBoilingEvent;
+import org.milk.boiling.notification.dto.SerializationService;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import org.springframework.context.annotation.Bean;
@@ -32,14 +33,14 @@ public class RedisStreamMessageListenerConfig {
     private final Consumer<Subscription> subscriptionConsumer;
     private final Function<Throwable, Publisher<? extends List<MilkBoilingEvent>>> unexpectedErrorDueProcessingMessage;
     private final Function<List<MapRecord<String, Object, byte[]>>, Publisher<List<MilkBoilingEvent>>> mapRecordPublisherFunction;
-    private final BaseFury fury;
+    private final SerializationService serializationService;
 
     public RedisStreamMessageListenerConfig(RedisMessagingConfig redisMessagingConfig, ReactiveStreamOperations<String, Object, byte[]> reactiveStreamOperations,
-                                            BaseFury fury
+                                            SerializationService serializationService
     ) {
         this.redisMessagingConfig = redisMessagingConfig;
         this.reactiveStreamOperations = reactiveStreamOperations;
-        this.fury = fury;
+        this.serializationService = serializationService;
         this.subscriptionConsumer = _ -> log.trace("created redis stream for shard {}", redisMessagingConfig.getStreamNameForPod());
         this.mapRecordPublisherFunction = stringObjectMapRecord -> {
             var listId = stringObjectMapRecord.stream()
@@ -60,7 +61,7 @@ public class RedisStreamMessageListenerConfig {
 
     private MilkBoilingEvent getMilkBoilingEventFunction(MapRecord<String, Object, byte[]> mapRecord) {
         try {
-            return (MilkBoilingEvent) fury.deserialize(mapRecord.getValue().get("payload"));
+            return (MilkBoilingEvent) serializationService.deserialize(mapRecord.getValue().get("payload"));
         } catch (Exception e) {
             log.error(e.getMessage());
             return null;

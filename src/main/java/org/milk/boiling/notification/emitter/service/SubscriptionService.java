@@ -3,7 +3,7 @@ package org.milk.boiling.notification.emitter.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.milk.boiling.notification.emitter.cache.SubscriptionControlService;
-import org.milk.boiling.notification.emitter.dto.MilkBoilingEvent;
+import org.milk.boiling.notification.dto.MilkBoilingEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SignalType;
@@ -27,7 +27,6 @@ public class SubscriptionService {
                 .doOnError(throwable -> log.error("Due processing message exception was thrown", throwable))
                 .onErrorComplete()
                 .doFinally(signalType -> Optional.of(signalType).filter(signalTypes::contains).ifPresent(_ -> subscriptionCacheRepo.removeUserSessionSubscription(userId, subSession)));
-
 
     }
 }
